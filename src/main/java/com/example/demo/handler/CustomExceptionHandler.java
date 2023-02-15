@@ -11,6 +11,9 @@ import javax.servlet.http.HttpServletRequest;
 //@RestControllerAdvice   //标记专门处理异常的类，返回json数据   另一种ControllerAdvice，如果需要返回json数据，则方法需要加@ResponseBody
 @ControllerAdvice   //异常返回页面时使用
 public class CustomExceptionHandler {
+    /**
+     * 异常返回信息
+     */
 //    @ExceptionHandler(value = Exception.class)
 //    Object handlerException(Exception e, HttpServletRequest httpServletRequest) {
 //        return JsonData.buildError("服务端出问题", -2);
