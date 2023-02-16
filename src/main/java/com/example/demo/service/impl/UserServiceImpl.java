@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @Service
 public class UserServiceImpl implements UserService {
-    private Map<String, User> sessionMap = new HashMap<>();
+    public static Map<String, User> sessionMap = new HashMap<>();
     @Autowired
     UserMapper userMapper;
 
