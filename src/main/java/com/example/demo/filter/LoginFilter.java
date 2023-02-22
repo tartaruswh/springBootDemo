@@ -19,7 +19,7 @@ public class LoginFilter implements Filter {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-        System.out.println("init LoginFilter");
+        System.out.println("init LoginFilter====");
     }
 
     /**
@@ -78,6 +78,6 @@ public class LoginFilter implements Filter {
         }
     @Override
     public void destroy() {
-        System.out.println("destory LoginFilter");
+        System.out.println("destory LoginFilter====");
     }
 }
