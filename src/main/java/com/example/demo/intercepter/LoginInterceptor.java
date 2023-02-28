@@ -1,45 +1,28 @@
-package com.example.demo.filter;
+package com.example.demo.intercepter;
 
 import com.example.demo.model.User;
 import com.example.demo.service.impl.UserServiceImpl;
 import com.example.demo.utils.JsonData;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.servlet.ModelAndView;
 import org.thymeleaf.util.StringUtils;
 
-import javax.servlet.*;
-import javax.servlet.annotation.WebFilter;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-//映射到/api/v1/pri/*接口controller中
-//@WebFilter(urlPatterns = "/api/v1/pri/*",filterName = "LoginFilter")
-public class LoginFilter implements Filter {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-    @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-        System.out.println("init LoginFilter====");
-    }
+public class LoginInterceptor implements HandlerInterceptor {
 
-    /**
-     * 订单功能：需首先验证是否登录，通过获取请求中是否存在token，已登录则有token，未登录则无token
-     * @param servletRequest   拦截器获取到的请求信息
-     * @param servletResponse   拦截器获取到的响应信息
-     * @param filterChain
-     * @throws IOException
-     * @throws ServletException
-     */
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
-            throws IOException, ServletException {
-        System.out.println("doFilter LoginFilter=======");
-        HttpServletRequest req = (HttpServletRequest) servletRequest;
-        HttpServletResponse resp = (HttpServletResponse) servletResponse;
-        //获取token的两种方式：1.header中获取；2.parameter中获取
-        String token = req.getHeader("token");
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        System.out.println("LoginIntercepter preHandle====");//获取token的两种方式：1.header中获取；2.parameter中获取
+        String token = request.getHeader("token");
         if (StringUtils.isEmpty(token)) {
-            token = req.getParameter("token");
+            token = request.getParameter("token");
         }
         System.out.println(token);
         //如果两种获取token都为空，则返回提示信息
@@ -47,20 +30,23 @@ public class LoginFilter implements Filter {
         if (!StringUtils.isEmpty(token)) {
             User user = UserServiceImpl.sessionMap.get(token);
             if (user != null) {
-                //如果为已登录，则不执行拦截
-                filterChain.doFilter(servletRequest, servletResponse);
+                //如果为已登录，返回true，则不执行拦截,执行正常请求
+                return true;
             } else {
-                //传入token错误
+                //传入token错误，不执行请求，通过自定义renderJson返回
                 JsonData jsonData = JsonData.buildError("登录无效，token无效", -2);
                 String jsonStr = objectMapper.writeValueAsString(jsonData);
-                renderjson(resp, jsonStr);
+                renderjson(response, jsonStr);
+                return false;
             }
         }else {
             //未登录
             JsonData jsonData1 = JsonData.buildError("未登录", -3);
             String jsonStr1 = objectMapper.writeValueAsString(jsonData1);
-            renderjson(resp, jsonStr1);
+            renderjson(response, jsonStr1);
+            return false;
         }
+//        return HandlerInterceptor.super.preHandle(request, response, handler);
     }
 
     //将拦截器响应结果以传入的json格式返回给前端，正常是以controller接口返回的，该方式printWriter返回
@@ -76,8 +62,16 @@ public class LoginFilter implements Filter {
             throw new RuntimeException(e);
         }
     }
+
     @Override
-    public void destroy() {
-        System.out.println("destory LoginFilter====");
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+        System.out.println("LoginIntercepter postHandle====");
+        HandlerInterceptor.super.postHandle(request, response, handler, modelAndView);
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+        System.out.println("LoginIntercepter afterCompletion====");
+        HandlerInterceptor.super.afterCompletion(request, response, handler, ex);
     }
 }
